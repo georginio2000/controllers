@@ -16,16 +16,16 @@ def normalize(arr, t_min, t_max):
 class MPC:
     def __init__(self):
         #experiment  conditions
-        self.INITIAL_Y_ERROR = -20
-        self.INITIAL_ΤΗΕΤΑ_ERROR=-1.5
-        self.VELOCITY = 30
+        self.INITIAL_Y_ERROR = 0
+        self.INITIAL_ΤΗΕΤΑ_ERROR=0
+        self.VELOCITY = 15
         self.TIME_STEP = 0.1
         self.HORIZON = 10
 
         self.model_type = 'continuous'
         self.model = do_mpc.model.Model(self.model_type)
         #Certain parameters
-        self.L=20
+        self.L=25
         self.y_desired=0
         self.theta_desired=0
         self.w_n=1
@@ -43,11 +43,8 @@ class MPC:
         #differential equations
         self.model.set_rhs('y',self.VELOCITY*np.sin(theta))
         self.model.set_rhs('theta',self.VELOCITY*np.tan(delta)/self.L)
-
         self.model.setup()
-
         self.mpc=do_mpc.controller.MPC(self.model)
-
         #Configuring the MPC controller
         setup_mpc = {
             'n_horizon': self.HORIZON,
@@ -56,12 +53,9 @@ class MPC:
             'store_full_solution': True,
         }
         self.mpc.set_param(**setup_mpc)
-
         mterm = self.w_n*((y-self.y_desired)**2 + (theta-self.theta_desired)**2)
         lterm = (y-self.y_desired)**2 + (theta-self.theta_desired)**2
-
         self.mpc.set_objective(mterm=mterm, lterm=lterm)
-
         self.mpc.set_rterm(
             delta=100
         )
@@ -69,12 +63,12 @@ class MPC:
         # Lower bounds:
         self.mpc.bounds['lower','_x', 'y'] = -15
         self.mpc.bounds['lower','_x', 'theta'] = -np.pi/3
-        self.mpc.bounds['lower','_u', 'delta'] = -np.pi/6
+        self.mpc.bounds['lower','_u', 'delta'] = -0.38  #-np.pi/6
 
         # Upper bounds on states
         self.mpc.bounds['upper','_x', 'y'] = 15
         self.mpc.bounds['upper','_x', 'theta'] = np.pi/3
-        self.mpc.bounds['upper','_u', 'delta'] = np.pi/6
+        self.mpc.bounds['upper','_u', 'delta'] = 0.38 #np.pi/6
 
         #Scaling
         self.mpc.scaling['_x', 'y'] = 1
@@ -94,8 +88,7 @@ class MPC:
         self.simulator.setup()
 
         self.simulator_time = 0
-    def mpc_correction(self,crosstrack_error,heading_error,velocity):
-        self.VELOCITY=velocity
+    def mpc_correction(self,crosstrack_error,heading_error):
         x0=np.array([crosstrack_error, heading_error])
         self.simulator.x0 = x0
         self.mpc.x0 = x0

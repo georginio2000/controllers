@@ -11,13 +11,13 @@ def normalize(arr, t_min, t_max):
         norm_arr.append(temp)
     return norm_arr
 
-192 168 1 118
+
 class Stanley:
     def __init__(self):
         self.INITIAL_Y_ERROR = 10
         self.INITIAL_ΤΗΕΤΑ_ERROR= 0
-        self.VELOCITY = 30
-        self.K = 2 #control gain 
+        self.VELOCITY = 20
+        self.K =2 #control gain 
         self.max_steer = np.pi/6
     def stanley_correction( self,crosstrack_error,heading_error,velocity): #crosstrack in pixels
         desired_steering_angle = -heading_error - np.arctan(self.K*crosstrack_error/velocity)
